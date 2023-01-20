@@ -1,43 +1,52 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Net.Mime;
-using Unity.VisualScripting;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using UnityEngine.UIElements;
 
 public class Spawner : MonoBehaviour
 {
+    [SerializeField] private Camera camera;
     [SerializeField] private GameObject _square;
-    // string Path = "F:/Program Files/Unity projects/Cupboards/Assets/Input/Input.txt";
-    private List<GameObject> Squares;
-    private int[] startGameState;
+    [SerializeField] private Material _material;
+    
+    public Color c1 = Color.white;
+    public Color c2 = Color.white;
+    public int[] startGameState;
+    public int[][] positions;
+    public int cubesCount;
+    
+    private LineRenderer lr;
+    private List<GameObject> LineRenderers;
     private int[] endGameState;
     private string[] lines;
-    private int[][] positions;
     private int[][] _netlist;
     private int _connectionsCount;
     private string[] position = new string[2];
+    
     char delimiterChars = ',';
-    void Start()
+
+    void Awake()
     {
         parseInputFile("F:/Program Files/Unity projects/Cupboards/Assets/Input/Input.txt");
+        CreateLineRenderers();
+        camera.transform.position = new Vector3(200, 200, 0);
+        LinesCreation(ref LineRenderers);
     }
-
+    
     private void parseInputFile(string path)
     {
         int k = 0;
 
         lines = File.ReadAllLines(path);
-        int _quaresCount = Convert.ToInt32(lines[0]);
+        cubesCount = Convert.ToInt32(lines[0]);
         int _positionsCount = Convert.ToInt32(lines[1]);
 
         parseCoordinates(2, _positionsCount + 2, ref positions, _positionsCount);
         createSquares(ref positions);
 
-        parseGameStates(ref startGameState, _quaresCount, _positionsCount);
-        parseGameStates(ref endGameState, _quaresCount, _positionsCount+1);
+        parseGameStates(ref startGameState, cubesCount, _positionsCount);
+        parseGameStates(ref endGameState, cubesCount, _positionsCount+1);
         
         _connectionsCount = Convert.ToInt32(lines[_positionsCount + 4]);
         parseCoordinates(_positionsCount + 5, lines.Length, ref _netlist, lines.Length - (_positionsCount + 5));
@@ -47,7 +56,7 @@ public class Spawner : MonoBehaviour
         foreach (var nextCoordinate in positions)
         {
             var square = Instantiate(_square);
-            square.transform.position = new Vector2( nextCoordinate[0], nextCoordinate[1]);
+            square.transform.position = new Vector3( nextCoordinate[0], nextCoordinate[1],0f);
         }
     }
 
@@ -81,6 +90,58 @@ public class Spawner : MonoBehaviour
             k++;
         }
     }
+    
+    
+    private void ChangeLineColor (ref GameObject LineRenderedObj)
+    {
+        lr = LineRenderedObj.GetComponent<LineRenderer>();
+        float alpha = 3.0f;
+        Gradient gradient = new Gradient();
+        gradient.SetKeys(
+            new GradientColorKey[] { new GradientColorKey(c1, 0.0f), new GradientColorKey(c2, 1.0f) },
+            new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
+        );
+        lr.colorGradient = gradient;
+    }
+    private void CreateLineRenderers()
+    {
+        LineRenderers = new List<GameObject>();
+        for (int i = 0; i < _connectionsCount; i++)
+        {
+            GameObject lineRenderer = new GameObject($"{i}");
+            lineRenderer.AddComponent<LineRenderer>();
+            LineRenderers.Add(lineRenderer);
+        }
+    }
+    private void DrawLine(ref int[] fromPoint, ref int[] toPoint, ref GameObject points)
+    {   
+            lr = points.GetComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.startWidth = 5;
+            lr.endWidth = 5;
+            // lr.startColor = Color.green;
+            // lr.endColor = Color.white;
+            lr.gameObject.GetComponent<Renderer>().material = _material;
+            //ChangeLineColor(ref points);
+            Vector2 firstPoint = new Vector3(fromPoint[0], fromPoint[1],0f);
+            Vector2 secondPoint = new Vector3(toPoint[0], toPoint[1],0f);
+            lr.SetPosition(0, firstPoint);
+            lr.SetPosition(1, secondPoint);
+    }
+
+    private void LinesCreation(ref List<GameObject> lineRenderers)
+    {
+        for (int i = 0; i < _netlist.Length; i++)
+        {
+            int firstPosition = _netlist[i][0];
+            int secondPosition = _netlist[i][1];
+            int[] firstPoint = positions[firstPosition - 1];
+            int[] secondPoint = positions[secondPosition - 1];
+            GameObject currentRenderer = lineRenderers[i];
+            DrawLine(ref firstPoint, ref secondPoint, ref currentRenderer);
+        }
+    }
+    
     // Update is called once per frame
     void Update()
     {
