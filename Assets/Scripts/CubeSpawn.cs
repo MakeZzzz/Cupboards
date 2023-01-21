@@ -8,7 +8,7 @@ using Random = UnityEngine.Random;
 public class CubeSpawn : MonoBehaviour
 {
     [SerializeField] private GameObject _cube;
-    [SerializeField]private Spawner gameСonditions;
+    [SerializeField]private FileReading gameСonditions;
     
     private List<Color> _colors = new List<Color>();
     private List<GameObject> _cubes  = new List<GameObject>();

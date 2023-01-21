@@ -4,7 +4,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class Spawner : MonoBehaviour
+public class FileReading : MonoBehaviour
 {
     [SerializeField] private Camera camera;
     [SerializeField] private GameObject _square;
