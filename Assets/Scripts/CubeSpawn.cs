@@ -39,6 +39,7 @@ public class CubeSpawn : MonoBehaviour
             var newCube = Instantiate(_cube);
             newCube.AddComponent<SortingGroup>();
             var layer = newCube.GetComponent<SortingGroup>();
+            newCube.AddComponent<BoxCollider2D>();
             layer.sortingOrder = 3;
             SetColor(ref newCube);
             var positionNumber = gameСonditions.startGameState[i];

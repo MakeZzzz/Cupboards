@@ -10,48 +10,48 @@ public class Spawner : MonoBehaviour
     [SerializeField] private GameObject _square;
     [SerializeField] private Material _material;
     
-    public Color c1 = Color.white;
-    public Color c2 = Color.white;
     public int[] startGameState;
-    public int[][] positions;
-    public int cubesCount;
-    
-    private LineRenderer lr;
-    private List<GameObject> LineRenderers;
     private int[] endGameState;
     private string[] lines;
-    private int[][] _netlist;
-    private int _connectionsCount;
     private string[] position = new string[2];
     
+    public int[][] positions;
+    private int[][] _netlist;
+    
+    private Dictionary<int, List<int>> neighbors = new Dictionary<int,List<int>>();
+    private Dictionary<int, int[]> pointToCoordinates = new Dictionary<int, int[]>();
+    private List<GameObject> LineRenderers;
+    private LineRenderer lr;
+    
+    public int cubesCount;
+    private int _connectionsCount;
     char delimiterChars = ',';
 
     void Awake()
     {
-        parseInputFile("F:/Program Files/Unity projects/Cupboards/Assets/Input/Input.txt");
+        ParseInputFile("F:/Program Files/Unity projects/Cupboards/Assets/Input/Input.txt");
         CreateLineRenderers();
         camera.transform.position = new Vector3(200, 200, 0);
         LinesCreation(ref LineRenderers);
     }
     
-    private void parseInputFile(string path)
+    private void ParseInputFile(string path)
     {
-        int k = 0;
-
         lines = File.ReadAllLines(path);
         cubesCount = Convert.ToInt32(lines[0]);
         int _positionsCount = Convert.ToInt32(lines[1]);
 
-        parseCoordinates(2, _positionsCount + 2, ref positions, _positionsCount);
-        createSquares(ref positions);
+        ParseCoordinates(2, _positionsCount + 2, ref positions, _positionsCount);
+        CreateSquares(ref positions);
 
-        parseGameStates(ref startGameState, cubesCount, _positionsCount);
-        parseGameStates(ref endGameState, cubesCount, _positionsCount+1);
+        ParseGameStates(ref startGameState, cubesCount, _positionsCount);
+        ParseGameStates(ref endGameState, cubesCount, _positionsCount+1);
         
         _connectionsCount = Convert.ToInt32(lines[_positionsCount + 4]);
-        parseCoordinates(_positionsCount + 5, lines.Length, ref _netlist, lines.Length - (_positionsCount + 5));
+        ParseCoordinates(_positionsCount + 5, lines.Length, ref _netlist, lines.Length - (_positionsCount + 5));
+        CreateGraph();
     }
-    private void createSquares(ref int[][] positions)
+    private void CreateSquares(ref int[][] positions)
     {
         foreach (var nextCoordinate in positions)
         {
@@ -60,7 +60,7 @@ public class Spawner : MonoBehaviour
         }
     }
 
-    private void parseGameStates(ref int[] parsed, int _quaresCount, int _positionsCount)
+    private void ParseGameStates(ref int[] parsed, int _quaresCount, int _positionsCount)
     {
         string[] temp = new string[_quaresCount];
         parsed = new int[_quaresCount];
@@ -71,7 +71,7 @@ public class Spawner : MonoBehaviour
         }
     }
     
-    private void parseCoordinates(int from, int to, ref int[][] parsed, int arrSize)
+    private void ParseCoordinates(int from, int to, ref int[][] parsed, int arrSize)
     {
         int k = 0;
         parsed = new int[arrSize][];
@@ -91,18 +91,6 @@ public class Spawner : MonoBehaviour
         }
     }
     
-    
-    private void ChangeLineColor (ref GameObject LineRenderedObj)
-    {
-        lr = LineRenderedObj.GetComponent<LineRenderer>();
-        float alpha = 3.0f;
-        Gradient gradient = new Gradient();
-        gradient.SetKeys(
-            new GradientColorKey[] { new GradientColorKey(c1, 0.0f), new GradientColorKey(c2, 1.0f) },
-            new GradientAlphaKey[] { new GradientAlphaKey(alpha, 0.0f), new GradientAlphaKey(alpha, 1.0f) }
-        );
-        lr.colorGradient = gradient;
-    }
     private void CreateLineRenderers()
     {
         LineRenderers = new List<GameObject>();
@@ -141,8 +129,35 @@ public class Spawner : MonoBehaviour
             DrawLine(ref firstPoint, ref secondPoint, ref currentRenderer);
         }
     }
+
+    private void CreateGraph()
+    {
+        for(int i = 0; i < _netlist.Length; i++)
+        {
+            if (!neighbors.ContainsKey(_netlist[i][0]))
+            {
+                neighbors[_netlist[i][0]] = new List<int>();
+            }
+            if (!neighbors.ContainsKey(_netlist[i][1]))
+            {
+                neighbors[_netlist[i][1]] = new List<int>();
+            }
+            neighbors[_netlist[i][0]].Add(_netlist[i][1]);
+            neighbors[_netlist[i][1]].Add(_netlist[i][0]);
+        }
+        
+
+        foreach (var item in neighbors)
+        {
+            Debug.Log(item.Key);
+            foreach (var index in item.Value) {
+                Debug.Log(index);
+            }
+            Debug.Log("_______________________________");
+        }
+    }
     
-    // Update is called once per frame
+    
     void Update()
     {
        
